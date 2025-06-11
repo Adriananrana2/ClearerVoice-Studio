@@ -6,7 +6,7 @@ use_cuda: 1           # 1 for True, 0 for False
 
 # dataset
 speaker_no: 2
-mix_lst_path: ./data/KUL/mixture_data_list_2mix.csv
+mix_lst_path: ./data/MADEEG/npy_output_EEG/response_files_reshaped/file_list.csv
 audio_direc: ./data/MADEEG//npy_output_EEG/stimulus_files/
 reference_direc: ./data/MADEEG//npy_output_EEG/response_files/
 audio_sr: 8000

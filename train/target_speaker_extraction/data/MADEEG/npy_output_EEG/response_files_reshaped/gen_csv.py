@@ -1,29 +1,41 @@
 import os
 import csv
+import random
+
+# Set random seed for reproducibility
+random.seed(42)
 
 # Define working directory
 folder_path = './'
 output_csv = os.path.join(folder_path, 'file_list.csv')
 
-# Collect rows
+# Collect all .npy filenames (no suffix)
+file_names = [
+    fname[:-4]  # remove '.npy'
+    for fname in os.listdir(folder_path)
+    if fname.endswith('.npy')
+]
+
+# Shuffle the list
+random.shuffle(file_names)
+
+# Split
+train_files = file_names[:200]
+test_files = file_names[200:223]
+val_files = file_names[223:]
+
+# Build rows with dataset label
 rows = []
+for name in train_files:
+    rows.append(['train', name])
+for name in test_files:
+    rows.append(['test', name])
+for name in val_files:
+    rows.append(['val', name])
 
-# Loop over .npy files
-for file_name in os.listdir(folder_path):
-    if file_name.endswith('.npy'):
-        # Remove file extension
-        name_without_ext = file_name[:-4]  # remove '.npy'
-        
-        # Split at first underscore
-        parts = name_without_ext.split('_', 1)
-        if len(parts) == 2:
-            first_col = parts[0]
-            second_col = parts[1]
-            rows.append([first_col, second_col])
-
-# Write to CSV (no header)
-with open(output_csv, mode='w', newline='') as csvfile:
-    writer = csv.writer(csvfile)
+# Save to CSV (no header)
+with open(output_csv, mode='w', newline='') as f:
+    writer = csv.writer(f)
     writer.writerows(rows)
 
 print(f"CSV file saved to: {output_csv}")

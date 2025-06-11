@@ -5,7 +5,7 @@
 gpu_id=0,1													# Visible GPUs
 n_gpu=2														# Number of GPU used for training
 checkpoint_dir=''											# Leave empty if it's a new training, otherwise provide the name as 'checkpoints/log_...'
-config_pth=config/config_LRS2_lip_dprnn_2spk.yaml			# The config file, only used if it's a new training
+config_pth=config/config_MADEEG_eeg_neuroheed.yaml			# The config file, only used if it's a new training
 #####
 
 
