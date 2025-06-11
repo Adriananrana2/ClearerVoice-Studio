@@ -3,7 +3,7 @@ import soundfile as sf
 import os
 
 # Directory containing all .npy files
-soli_dir = "/users/PAS2301/liu215229932/Music_Project/Models/ClearerVoice-Studio/train/target_speaker_extraction/data/MADEEG/npy_output_EEG/soli_files"
+soli_dir = "./"
 
 # Loop through all .npy files in the directory
 for filename in os.listdir(soli_dir):

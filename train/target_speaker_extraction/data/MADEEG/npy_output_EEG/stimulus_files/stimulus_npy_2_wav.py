@@ -3,7 +3,7 @@ import soundfile as sf
 import os
 
 # Directory containing all .npy stimulus files
-stimulus_dir = "/users/PAS2301/liu215229932/Music_Project/Models/ClearerVoice-Studio/train/target_speaker_extraction/data/MADEEG/npy_output_EEG/stimulus_files"
+stimulus_dir = "./"
 
 # Loop through all .npy files in the directory
 for filename in os.listdir(stimulus_dir):
