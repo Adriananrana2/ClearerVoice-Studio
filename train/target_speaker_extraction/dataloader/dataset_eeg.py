@@ -9,7 +9,7 @@ import soundfile as sf
 
 from .utils import DistributedSampler
 
-def get_dataloader_eeg(args, partition):
+def get_dataloader_eeg(args, partition): #(YamlConfig, 'T/V/T') [FIXME]
     datasets = dataset_eeg(args, partition)
 
     sampler = DistributedSampler(
@@ -34,7 +34,7 @@ def custom_collate_fn(batch):
     return a_mix, a_tgt, ref_tgt
 
 class dataset_eeg(data.Dataset):
-    def __init__(self, args, partition):
+    def __init__(self, args, partition): #(YamlConfig, 'T/V/T') [FIXME]
         self.minibatch =[]
         self.args = args
         self.partition = partition
@@ -44,13 +44,14 @@ class dataset_eeg(data.Dataset):
         self.speaker_no=args.speaker_no
         self.batch_size=args.batch_size
 
-        self.mix_lst_path = args.mix_lst_path
-        self.audio_direc = args.audio_direc
-        self.eeg_direc = args.reference_direc
+        self.mix_lst_path = args.mix_lst_path # file_list.csv [FIXME]
+        self.audio_direc = args.audio_direc # 正确答案 [FIXME]
+        self.eeg_direc = args.reference_direc # 脑电波 [FIXME]
         
         mix_lst=open(self.mix_lst_path).read().splitlines()
         mix_lst=list(filter(lambda x: x.split(',')[0]==partition, mix_lst))#[:200]
-        mix_lst = sorted(mix_lst, key=lambda data: float(data.split(',')[-1]), reverse=True)
+        # mix_lst = sorted(mix_lst, key=lambda data: float(data.split(',')[-1]), reverse=True) [FIXME]
+        file_names = [x.split(',')[1] for x in mix_lst]
         
         start = 0
         while True:
@@ -61,11 +62,16 @@ class dataset_eeg(data.Dataset):
             start = end
 
         self.eeg_dict={}
-        for subject in range(1,17):
-            for trial in range(1,9):
-                eeg_path = f'{self.eeg_direc}S{subject}Tra{trial}.npy'
-                eeg_data = np.load(eeg_path)
-                self.eeg_dict[(subject,trial)] = eeg_data
+        for item in file_names:
+            eeg_path = self.eeg_direc + item + ".npy"
+            eeg_data = np.load(eeg_path)
+            subject, trial = item.split("_", 1)
+            self.eeg_dict[(subject,trial)] = eeg_data
+        # for subject in range(1,17): [FIXME]
+        #     for trial in range(1,9):
+        #         eeg_path = f'{self.eeg_direc}S{subject}Tra{trial}.npy'
+        #         eeg_data = np.load(eeg_path)
+        #         self.eeg_dict[(subject,trial)] = eeg_data
 
 
 
@@ -85,15 +91,15 @@ class dataset_eeg(data.Dataset):
             line=line_cache.split(',')
 
             # load target eeg
-            subject, trial = line[1], line[2]
-            eeg_data = self.eeg_dict[(int(subject),int(trial))]
-            eeg_start = int(float(line[4])*self.ref_sr)
+            subject, trial = line[1].split("_",1)
+            eeg_data = self.eeg_dict[(subject,trial)]
+            eeg_start = 0
             eeg_end = eeg_start + min_length_eeg
             eeg_tgt = eeg_data[eeg_start:eeg_end,:]
 
             # load tgt audio
-            tgt_audio_path = self.audio_direc + line[3]
-            start = float(line[4]) * self.audio_sr
+            tgt_audio_path = self.audio_direc + trial
+            start = 0
             end = start + min_length_audio
             a_tgt, _ = sf.read(tgt_audio_path, start=int(start), stop=int(end), dtype='float32')
 
