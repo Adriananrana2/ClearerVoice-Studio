@@ -6,6 +6,9 @@ import soundfile as sf
 input_dir = "./"
 output_dir = "../isolated_songs/"
 
+# Create output directory if it doesn't exist
+os.makedirs(output_dir, exist_ok=True)
+
 # Track processed songs to avoid duplicates
 seen_songs = set()
 
