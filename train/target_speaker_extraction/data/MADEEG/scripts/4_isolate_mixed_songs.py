@@ -3,8 +3,8 @@ import numpy as np
 import soundfile as sf
 
 # Define input/output directories
-input_dir = "./"
-output_dir = "../isolated_songs/"
+input_dir = "../preprocessed_npy/soli_npy/"
+output_dir = "../processed_data/isolated_wav/"
 
 # Create output directory if it doesn't exist
 os.makedirs(output_dir, exist_ok=True)
@@ -32,13 +32,13 @@ for fname in os.listdir(input_dir):
     inst_code = parts[4]
     instruments = [inst_code[i:i+2] for i in range(0, len(inst_code), 2)]
 
-    # Load audio and extract solos
+    # Load audio and isolate
     audio_array = np.load(npy_path)  # shape: (3, N)
     num_instruments = len(instruments)
 
     for i in range(num_instruments):
-        solo_audio = audio_array[i]
-        solo_name = f"{song_id}_{instruments[i]}_soli.wav"
-        solo_path = os.path.join(output_dir, solo_name)
-        sf.write(solo_path, solo_audio, samplerate=44100)
-        print(f"Saved: {solo_path}")
+        isolated_audio = audio_array[i]
+        isolated_name = f"{song_id}_{instruments[i]}_soli.wav"
+        isolated_path = os.path.join(output_dir, isolated_name)
+        sf.write(isolated_path, isolated_audio, samplerate=44100)
+        print(f"Saved: {isolated_path}")

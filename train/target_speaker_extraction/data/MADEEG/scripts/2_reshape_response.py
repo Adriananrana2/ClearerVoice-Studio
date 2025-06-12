@@ -2,8 +2,8 @@ import os
 import numpy as np
 
 # Define directories
-input_dir = './'  # current directory (where this script is located)
-output_dir = '../response_files_reshaped'
+input_dir = '../preprocessed_npy/responses_npy/'  # current directory (where this script is located)
+output_dir = '../processed_data/response_npy/'
 
 # Create output directory if it doesn't exist
 os.makedirs(output_dir, exist_ok=True)

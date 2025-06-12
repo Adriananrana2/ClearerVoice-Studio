@@ -6,13 +6,14 @@ import random
 random.seed(42)
 
 # Define working directory
-folder_path = './'
-output_csv = os.path.join(folder_path, 'file_list.csv')
+input_dir = '../processed_data/response_npy/'
+output_dir = '../processed_data/'
+output_csv = os.path.join(output_dir, 'file_list.csv')
 
 # Collect all .npy filenames (no suffix)
 file_names = [
     fname[:-4]  # remove '.npy'
-    for fname in os.listdir(folder_path)
+    for fname in os.listdir(input_dir)
     if fname.endswith('.npy')
 ]
 
