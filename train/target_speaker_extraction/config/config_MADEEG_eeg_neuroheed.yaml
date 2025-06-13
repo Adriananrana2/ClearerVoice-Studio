@@ -8,7 +8,7 @@ use_cuda: 1           # 1 for True, 0 for False
 speaker_no: 2
 mix_lst_path: ./data/MADEEG/processed_data/file_list.csv
 audio_direc: ./data/MADEEG/processed_data/isolated_wav/
-int_direc: ./data/MADEEG/processed_data/stimulus_wav/
+stimulus_direc: ./data/MADEEG/processed_data/stimulus_wav/
 reference_direc: ./data/MADEEG/processed_data/response_npy/
 audio_sr: 44100
 ref_sr: 256         # reference sampleing rate, lip: 25 , gesture: 15, eeg: 128

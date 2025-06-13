@@ -98,6 +98,7 @@ if __name__ == '__main__':
     # others
     parser.add_argument('--mix_lst_path', type=str)
     parser.add_argument('--audio_direc', type=str)
+    parser.add_argument('--stimulus_direc', type=str)
     parser.add_argument('--reference_direc', type=str)
     parser.add_argument('--speaker_no', type=int)
     parser.add_argument('--audio_sr',  type=int, help='audio sampling_rate')

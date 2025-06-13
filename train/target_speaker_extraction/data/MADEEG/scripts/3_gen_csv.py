@@ -12,7 +12,7 @@ output_csv = os.path.join(output_dir, 'file_list.csv')
 
 # Collect all .npy filenames (no suffix)
 file_names = [
-    fname[:-4]  # remove '.npy'
+    fname[:-12]  # remove '<filetype>.npy'
     for fname in os.listdir(input_dir)
     if fname.endswith('.npy')
 ]

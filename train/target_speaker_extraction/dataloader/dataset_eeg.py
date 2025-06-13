@@ -44,13 +44,13 @@ class dataset_eeg(data.Dataset):
         self.speaker_no=args.speaker_no
         self.batch_size=args.batch_size
 
-        self.mix_lst_path = args.mix_lst_path # file_list.csv [FIXME]
-        self.audio_direc = args.audio_direc # 正确答案 [FIXME]
-        self.eeg_direc = args.reference_direc # 脑电波 [FIXME]
+        self.mix_lst_path = args.mix_lst_path
+        self.audio_direc = args.audio_direc
+        self.stimulus_direc = args.stimulus_direc
+        self.eeg_direc = args.reference_direc
         
         mix_lst=open(self.mix_lst_path).read().splitlines()
         mix_lst=list(filter(lambda x: x.split(',')[0]==partition, mix_lst))#[:200]
-        # mix_lst = sorted(mix_lst, key=lambda data: float(data.split(',')[-1]), reverse=True) [FIXME]
         file_names = [x.split(',')[1] for x in mix_lst]
         
         start = 0
@@ -63,16 +63,10 @@ class dataset_eeg(data.Dataset):
 
         self.eeg_dict={}
         for item in file_names:
-            eeg_path = self.eeg_direc + item + ".npy"
+            filename = item + "response.npy"
+            eeg_path = os.path.join(self.eeg_direc, filename)
             eeg_data = np.load(eeg_path)
-            subject, trial = item.split("_", 1)
-            self.eeg_dict[(subject,trial)] = eeg_data
-        # for subject in range(1,17): [FIXME]
-        #     for trial in range(1,9):
-        #         eeg_path = f'{self.eeg_direc}S{subject}Tra{trial}.npy'
-        #         eeg_data = np.load(eeg_path)
-        #         self.eeg_dict[(subject,trial)] = eeg_data
-
+            self.eeg_dict[eeg_path] = eeg_data
 
 
     def __getitem__(self, index):
@@ -81,47 +75,33 @@ class dataset_eeg(data.Dataset):
         tgt_eegs=[]
         
         batch_lst = self.minibatch[index]
-        min_length_second = float(batch_lst[-1].split(',')[-1])      # truncate to the shortest utterance in the batch
+        min_length_second = 19.0      # truncate to the shortest utterance in the batch
         min_length_eeg = math.floor(min_length_second*self.ref_sr)
         min_length_audio = math.floor(min_length_second*self.audio_sr)
         min_length_eeg = min(min_length_eeg, self.max_length*self.ref_sr)
         min_length_audio = min(min_length_audio, self.max_length*self.audio_sr)
 
         for line_cache in batch_lst:
-            line=line_cache.split(',')
+            subject_trial = line_cache.split(',')[1]
 
             # load target eeg
-            subject, trial = line[1].split("_",1)
-            eeg_data = self.eeg_dict[(subject,trial)]
+            filename = os.path.join(self.eeg_direc, subject_trial + "response.npy")
+            eeg_data = self.eeg_dict[filename]
             eeg_start = 0
             eeg_end = eeg_start + min_length_eeg
             eeg_tgt = eeg_data[eeg_start:eeg_end,:]
 
             # load tgt audio
-            tgt_audio_path = self.audio_direc + trial
+            tgt_audio_path = self.audio_direc + subject_trial + "soli.wav"
             start = 0
             end = start + min_length_audio
             a_tgt, _ = sf.read(tgt_audio_path, start=int(start), stop=int(end), dtype='float32')
 
-            # load int eeg
-            int_audio_path = self.audio_direc + line[6]
-            start = float(line[7]) * self.audio_sr
+            # load stimulus audio
+            stimulus_audio_path = self.stimulus_direc + subject_trial + "stimulus.wav"
+            start = 0
             end = start + min_length_audio
-            a_int, _ = sf.read(int_audio_path, start=int(start), stop=int(end), dtype='float32')
-
-            # training snr augmentation
-            if float(line[8]) != 0:
-                target_power = np.linalg.norm(a_tgt, 2)**2 / a_tgt.size
-                intef_power = np.linalg.norm(a_int, 2)**2 / a_int.size
-                a_int *= np.sqrt(target_power/intef_power)
-                snr_1 = (10**(float(line[8])/20))
-
-                max_snr = max(1, snr_1)
-                a_tgt /= max_snr
-                a_int /= max_snr
-                a_int = a_int * snr_1
-
-            a_mix = a_tgt + a_int
+            a_mix, _ = sf.read(stimulus_audio_path, start=int(start), stop=int(end), dtype='float32')
 
             # audio normalization
             max_val = np.max(np.abs(a_mix))
