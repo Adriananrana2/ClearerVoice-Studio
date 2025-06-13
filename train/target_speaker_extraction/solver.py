@@ -256,7 +256,7 @@ class Solver(object):
         self._load_model(f'{self.args.checkpoint_dir}/last_best_checkpoint.pt')
         self.model.eval()
         with torch.no_grad():
-            for i, (a_mix, a_tgt, ref_tgt) in enumerate(data_loader):
+            for i, (a_mix, a_tgt, ref_tgt, filenames) in enumerate(data_loader):
                 a_mix = a_mix.to(self.args.device)
                 a_tgt = a_tgt.to(self.args.device)
 
