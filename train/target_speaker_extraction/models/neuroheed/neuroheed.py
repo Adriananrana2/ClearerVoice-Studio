@@ -167,11 +167,11 @@ class rnn(nn.Module):
         self.prelu = nn.PReLU()
         self.mask_conv1x1 = nn.Conv1d(B, N, 1, bias=False)
 
-
-        self.po_encoding = PositionalEncoding(d_model=64)
-        encoder_layers = TransformerEncoderLayer(d_model=64, nhead=1, dim_feedforward=64*4)
+        eeg_channels = args.network_reference.d_model
+        self.po_encoding = PositionalEncoding(d_model=eeg_channels)
+        encoder_layers = TransformerEncoderLayer(d_model=eeg_channels, nhead=1, dim_feedforward=64*4)
         self.eeg_net = TransformerEncoder(encoder_layers, num_layers=5)
-        self.fusion = nn.Conv1d(B+64, B, 1, bias=False)
+        self.fusion = nn.Conv1d(B+eeg_channels, B, 1, bias=False)
 
 
     def forward(self, x, eeg, reference, speech):
@@ -188,8 +188,8 @@ class rnn(nn.Module):
         x = self.layer_norm(x) # [M, N, K]
         x = self.bottleneck_conv1x1(x) # [M, B, K]
 
-
-        eeg = self.po_encoding(eeg.transpose(0,1))
+        eeg = eeg.transpose(1, 2).transpose(0,1)
+        eeg = self.po_encoding(eeg)
         eeg = self.eeg_net(eeg)
         eeg = eeg.transpose(0,1).transpose(1,2)
         eeg = F.interpolate(eeg, (D), mode='linear')
@@ -275,7 +275,7 @@ class rnn(nn.Module):
 
 class PositionalEncoding(nn.Module):
 
-    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
+    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 6000):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
 

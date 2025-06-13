@@ -27,11 +27,11 @@ def get_dataloader_eeg(args, partition): #(YamlConfig, 'T/V/T') [FIXME]
     return sampler, generator
 
 def custom_collate_fn(batch):
-    a_mix, a_tgt, ref_tgt = batch[0]
+    a_mix, a_tgt, ref_tgt, filenames = batch[0]
     a_mix = torch.tensor(a_mix)
     a_tgt = torch.tensor(a_tgt) 
     ref_tgt = torch.tensor(ref_tgt) 
-    return a_mix, a_tgt, ref_tgt
+    return a_mix, a_tgt, ref_tgt, filenames
 
 class dataset_eeg(data.Dataset):
     def __init__(self, args, partition): #(YamlConfig, 'T/V/T') [FIXME]
@@ -73,6 +73,7 @@ class dataset_eeg(data.Dataset):
         mix_audios=[]
         tgt_audios=[]
         tgt_eegs=[]
+        filenames = []
         
         batch_lst = self.minibatch[index]
         min_length_second = 19.0      # truncate to the shortest utterance in the batch
@@ -83,6 +84,7 @@ class dataset_eeg(data.Dataset):
 
         for line_cache in batch_lst:
             subject_trial = line_cache.split(',')[1]
+            filenames.append(subject_trial + "estimation.wav")
 
             # load target eeg
             filename = os.path.join(self.eeg_direc, subject_trial + "response.npy")
@@ -96,12 +98,16 @@ class dataset_eeg(data.Dataset):
             start = 0
             end = start + min_length_audio
             a_tgt, _ = sf.read(tgt_audio_path, start=int(start), stop=int(end), dtype='float32')
+            if a_tgt.ndim == 2:
+                a_tgt = a_tgt.mean(axis=1)  # Convert stereo to mono
 
             # load stimulus audio
             stimulus_audio_path = self.stimulus_direc + subject_trial + "stimulus.wav"
             start = 0
             end = start + min_length_audio
             a_mix, _ = sf.read(stimulus_audio_path, start=int(start), stop=int(end), dtype='float32')
+            if a_mix.ndim == 2:
+                a_mix = a_mix.mean(axis=1)  # Convert stereo to mono
 
             # audio normalization
             max_val = np.max(np.abs(a_mix))
@@ -113,7 +119,7 @@ class dataset_eeg(data.Dataset):
             tgt_audios.append(a_tgt)
             tgt_eegs.append(eeg_tgt)
 
-        return np.asarray(mix_audios, dtype=np.float32), np.asarray(tgt_audios, dtype=np.float32), np.asarray(tgt_eegs, dtype=np.float32)
+        return np.asarray(mix_audios, dtype=np.float32), np.asarray(tgt_audios, dtype=np.float32), np.asarray(tgt_eegs, dtype=np.float32), filenames
 
 
     def __len__(self):
