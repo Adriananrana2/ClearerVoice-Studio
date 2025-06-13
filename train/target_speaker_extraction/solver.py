@@ -5,6 +5,10 @@ import torch.nn.functional as F
 from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.distributed as dist
 import numpy as np
+"""SAVE ESTIMATONS"""
+import os
+import torchaudio
+"""SAVE ESTIMATONS"""
 
 from losses.loss_function import loss_wrapper
 from losses.metrics import SDR, cal_SISNR
@@ -181,11 +185,30 @@ class Solver(object):
         total_loss = 0
         self.accu_count = 0
         self.optimizer.zero_grad()
-        for i, (a_mix, a_tgt, ref_tgt) in enumerate(data_loader):
+        for i, (a_mix, a_tgt, ref_tgt, filenames) in enumerate(data_loader):
             a_mix = a_mix.to(self.args.device)
             a_tgt = a_tgt.to(self.args.device)
             
             a_tgt_est = self.model(a_mix, ref_tgt)
+            ###
+            # Create output folder if it doesn't exist
+            output_dir = "./estimations/"
+            os.makedirs(output_dir, exist_ok=True)
+
+            # Detach and move to CPU
+            est_audio = a_tgt_est[0].detach().cpu()  # use [0] if batch size > 1 and you only want the first sample
+
+            # Normalize to [-1, 1] for saving
+            est_audio = est_audio / est_audio.abs().max()
+
+            # Save with torchaudio
+            save_path = os.path.join(output_dir, filenames[0])  # if batch_size > 1, save all with loop
+            torchaudio.save(
+                save_path,
+                src=est_audio.unsqueeze(0),  # add channel dimension (1, T)
+                sample_rate=self.args.audio_sr
+            )
+            ###
             loss = self.loss(a_tgt, a_tgt_est)
 
             if state=='train':
@@ -223,7 +246,7 @@ class Solver(object):
     def evaluate(self, data_loader):
         avg_sisnri = 0
         avg_sdri = 0
-        avg_pesqi = 0
+        # avg_pesqi = 0
         avg_stoii = 0
 
         self._load_model(f'{self.args.checkpoint_dir}/last_best_checkpoint.pt')
@@ -245,9 +268,9 @@ class Solver(object):
                 sdri = SDR(a_tgt, a_tgt_est) - SDR(a_tgt, a_mix)
                 avg_sdri += sdri
 
-                a_tgt_est = a_tgt_est/np.max(np.abs(a_tgt_est))
-                pesqi =  (pesq(self.args.audio_sr, a_tgt, a_tgt_est, 'wb') - pesq(self.args.audio_sr, a_tgt, a_mix, 'wb'))
-                avg_pesqi += pesqi
+                # a_tgt_est = a_tgt_est/np.max(np.abs(a_tgt_est))
+                # pesqi =  (pesq(self.args.audio_sr, a_tgt, a_tgt_est, 'wb') - pesq(self.args.audio_sr, a_tgt, a_mix, 'wb'))
+                # avg_pesqi += pesqi
 
                 stoii = (stoi(a_tgt, a_tgt_est, self.args.audio_sr, extended=False) - stoi(a_tgt, a_mix, self.args.audio_sr, extended=False))
                 avg_stoii += stoii
@@ -255,13 +278,13 @@ class Solver(object):
 
         avg_sisnri = avg_sisnri / (i+1)
         avg_sdri = avg_sdri / (i+1)
-        avg_pesqi = avg_pesqi / (i+1)
+        # avg_pesqi = avg_pesqi / (i+1)
         avg_stoii = avg_stoii / (i+1)
 
 
         print(f'Avg SISNR:i {avg_sisnri}')
         print(f'Avg SNRi: {avg_sdri}')
-        print(f'Avg PESQi: {avg_pesqi}')
+        # print(f'Avg PESQi: {avg_pesqi}')
         print(f'Avg STOIi: {avg_stoii}')
 
 
