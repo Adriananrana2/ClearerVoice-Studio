@@ -12,6 +12,9 @@ os.makedirs(output_dir, exist_ok=True)
 # Track processed songs to avoid duplicates
 seen_songs = set()
 
+# Set fixed target length: 19 seconds at 44100 Hz
+TARGET_LENGTH = 44100 * 19  # 837900 samples
+
 # Loop through all .npy files
 for fname in os.listdir(input_dir):
     if not fname.endswith(".npy"):
@@ -38,6 +41,7 @@ for fname in os.listdir(input_dir):
 
     for i in range(num_instruments):
         isolated_audio = audio_array[i]
+        isolated_audio = isolated_audio[:TARGET_LENGTH] # Trim to 19 seconds max
         isolated_name = f"{song_id}_{instruments[i]}_soli.wav"
         isolated_path = os.path.join(output_dir, isolated_name)
         sf.write(isolated_path, isolated_audio, samplerate=44100)
