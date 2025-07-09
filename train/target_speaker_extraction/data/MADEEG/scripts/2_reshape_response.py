@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from scipy.signal import resample_poly  # Upsampling
 
 # Define directories
 input_dir = '../preprocessed_npy/responses_npy/'  # current directory (where this script is located)
@@ -9,7 +10,7 @@ output_dir = '../processed_data/response_npy/'
 os.makedirs(output_dir, exist_ok=True)
 
 # Desired shape
-target_shape = (20, 5052)
+upsample_factor = 5  # Upsample EEG from 256Hz → 1280Hz
 
 # Loop through .npy files
 for file_name in os.listdir(input_dir):
@@ -24,10 +25,13 @@ for file_name in os.listdir(input_dir):
             print(f"Skipping {file_name}: unexpected number of channels {data.shape[0]}")
             continue
         
-        # Cut to shape (20, 5052)
-        reshaped_data = data[:, :5052]
-        
+        # Cut to shape (20, 4864)
+        reshaped_data = data[:, :4864]
+
+        # ✅ Upsample to (20, 4864 * 5) = (20, 24320)
+        upsampled_data = resample_poly(reshaped_data, up=upsample_factor, down=1, axis=-1)
+
         # Save to new directory
         output_path = os.path.join(output_dir, file_name)
-        np.save(output_path, reshaped_data)
-        print(f"Saved reshaped file: {output_path}")
+        np.save(output_path, upsampled_data)
+        print(f"Saved upsampled file: {output_path} (shape: {upsampled_data.shape})")
